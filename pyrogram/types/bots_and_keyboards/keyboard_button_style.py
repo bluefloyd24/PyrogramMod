@@ -1,4 +1,8 @@
-from pyrogram import raw
+from pyrogram.raw.types import (
+    KeyboardButtonStyleBgDanger,
+    KeyboardButtonStyleBgPrimary,
+    KeyboardButtonStyleBgSuccess,
+)
 
 
 class KeyboardButtonStyle:
@@ -48,12 +52,10 @@ class KeyboardButtonStyle:
         self.icon       = icon
 
     def write(self):
-        """Serialize ke raw TL object yang dikirim ke Telegram server."""
         if self.bg_primary:
-            return raw.types.KeyboardButtonStyleBgPrimary()
+            return KeyboardButtonStyleBgPrimary()
         if self.bg_danger:
-            return raw.types.KeyboardButtonStyleBgDanger()
+            return KeyboardButtonStyleBgDanger()
         if self.bg_success:
-            return raw.types.KeyboardButtonStyleBgSuccess()
-        # Fallback: no style
+            return KeyboardButtonStyleBgSuccess()
         return None
