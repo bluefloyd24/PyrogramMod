@@ -52,6 +52,11 @@ class KeyboardButtonStyle:
         self.icon       = icon
 
     def write(self):
+        # Import di sini (lazy) — hindari circular import saat startup
+        from pyrogram.raw.types.keyboard_button_style_bg_primary import KeyboardButtonStyleBgPrimary
+        from pyrogram.raw.types.keyboard_button_style_bg_danger import KeyboardButtonStyleBgDanger
+        from pyrogram.raw.types.keyboard_button_style_bg_success import KeyboardButtonStyleBgSuccess
+
         if self.bg_primary:
             return KeyboardButtonStyleBgPrimary()
         if self.bg_danger:
