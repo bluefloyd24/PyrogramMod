@@ -42,8 +42,8 @@ class InlineKeyboardButton(Object):
         web_app (:obj:`~pyrogram.types.WebAppInfo`, *optional*):
             Description of the `Web App <https://core.telegram.org/bots/webapps>`_ that will be launched when the user
             presses the button. The Web App will be able to send an arbitrary message on behalf of the user using the
-            method :meth:`~pyrogram.Client.answer_web_app_query`. Available only in private chats between a user and the
-            bot.
+            method :meth:`~pyrogram.Client.answer_web_app_query`. Available only in private chats between a user and
+            the bot.
 
         login_url (:obj:`~pyrogram.types.LoginUrl`, *optional*):
              An HTTP URL used to automatically authorize the user. Can be used as a replacement for
@@ -55,20 +55,18 @@ class InlineKeyboardButton(Object):
         switch_inline_query (``str``, *optional*):
             If set, pressing the button will prompt the user to select one of their chats, open that chat and insert
             the bot's username and the specified inline query in the input field. Can be empty, in which case just
-            the bot's username will be inserted.Note: This offers an easy way for users to start using your bot in
-            inline mode when they are currently in a private chat with it. Especially useful when combined with
-            switch_pm… actions – in this case the user will be automatically returned to the chat they switched from,
-            skipping the chat selection screen.
+            the bot's username will be inserted.
 
         switch_inline_query_current_chat (``str``, *optional*):
             If set, pressing the button will insert the bot's username and the specified inline query in the current
-            chat's input field. Can be empty, in which case only the bot's username will be inserted.This offers a
-            quick way for the user to open your bot in inline mode in the same chat – good for selecting something
-            from multiple options.
+            chat's input field. Can be empty, in which case only the bot's username will be inserted.
 
         callback_game (:obj:`~pyrogram.types.CallbackGame`, *optional*):
             Description of the game that will be launched when the user presses the button.
             **NOTE**: This type of button **must** always be the first button in the first row.
+
+        style (:obj:`~pyrogram.types.KeyboardButtonStyle`, *optional*):
+            Style for the button background color (primary/blue, danger/red, success/green).
     """
 
     def __init__(
@@ -81,7 +79,8 @@ class InlineKeyboardButton(Object):
         user_id: int = None,
         switch_inline_query: str = None,
         switch_inline_query_current_chat: str = None,
-        callback_game: "types.CallbackGame" = None
+        callback_game: "types.CallbackGame" = None,
+        style: "types.KeyboardButtonStyle" = None,
     ):
         super().__init__()
 
@@ -94,13 +93,11 @@ class InlineKeyboardButton(Object):
         self.switch_inline_query = switch_inline_query
         self.switch_inline_query_current_chat = switch_inline_query_current_chat
         self.callback_game = callback_game
-        # self.pay = pay
+        self.style = style
 
     @staticmethod
     def read(b: "raw.base.KeyboardButton"):
         if isinstance(b, raw.types.KeyboardButtonCallback):
-            # Try decode data to keep it as string, but if fails, fallback to bytes so we don't lose any information,
-            # instead of decoding by ignoring/replacing errors.
             try:
                 data = b.data.decode()
             except UnicodeDecodeError:
@@ -156,53 +153,68 @@ class InlineKeyboardButton(Object):
             )
 
     async def write(self, client: "pyrogram.Client"):
-        if self.callback_data is not None:
-            # Telegram only wants bytes, but we are allowed to pass strings too, for convenience.
-            data = bytes(self.callback_data, "utf-8") if isinstance(self.callback_data, str) else self.callback_data
+        # Resolve style ke raw TL object (atau None jika tidak ada)
+        raw_style = self.style.write() if self.style else None
 
-            return raw.types.KeyboardButtonCallback(
+        btn = None
+
+        if self.callback_data is not None:
+            data = (
+                bytes(self.callback_data, "utf-8")
+                if isinstance(self.callback_data, str)
+                else self.callback_data
+            )
+            btn = raw.types.KeyboardButtonCallback(
                 text=self.text,
                 data=data
             )
 
-        if self.url is not None:
-            return raw.types.KeyboardButtonUrl(
+        elif self.url is not None:
+            btn = raw.types.KeyboardButtonUrl(
                 text=self.text,
                 url=self.url
             )
 
-        if self.login_url is not None:
+        elif self.login_url is not None:
+            # login_url.write() mengembalikan raw object langsung
             return self.login_url.write(
                 text=self.text,
                 bot=await client.resolve_peer(self.login_url.bot_username or "self")
             )
 
-        if self.user_id is not None:
-            return raw.types.InputKeyboardButtonUserProfile(
+        elif self.user_id is not None:
+            btn = raw.types.InputKeyboardButtonUserProfile(
                 text=self.text,
                 user_id=await client.resolve_peer(self.user_id)
             )
 
-        if self.switch_inline_query is not None:
-            return raw.types.KeyboardButtonSwitchInline(
+        elif self.switch_inline_query is not None:
+            btn = raw.types.KeyboardButtonSwitchInline(
                 text=self.text,
                 query=self.switch_inline_query
             )
 
-        if self.switch_inline_query_current_chat is not None:
-            return raw.types.KeyboardButtonSwitchInline(
+        elif self.switch_inline_query_current_chat is not None:
+            btn = raw.types.KeyboardButtonSwitchInline(
                 text=self.text,
                 query=self.switch_inline_query_current_chat,
                 same_peer=True
             )
 
-        if self.callback_game is not None:
-            return raw.types.KeyboardButtonGame(
-                text=self.text
-            )
+        elif self.callback_game is not None:
+            btn = raw.types.KeyboardButtonGame(text=self.text)
 
-        if self.web_app is not None:
-            return raw.types.KeyboardButtonWebView(
+        elif self.web_app is not None:
+            btn = raw.types.KeyboardButtonWebView(
                 text=self.text,
                 url=self.web_app.url
             )
+
+        # Inject style jika ada
+        if btn is not None and raw_style is not None:
+            try:
+                btn.style = raw_style
+            except AttributeError:
+                pass  # Tipe button ini tidak support style, skip
+
+        return btn
