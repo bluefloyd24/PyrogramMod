@@ -12,15 +12,13 @@ class KeyboardButtonStyle:
         self.icon       = icon
 
     def write(self):
-        # Lazy import — hindari circular import saat startup pyrogram
-        from pyrogram.raw.types.keyboard_button_style_bg_primary import KeyboardButtonStyleBgPrimary
-        from pyrogram.raw.types.keyboard_button_style_bg_danger import KeyboardButtonStyleBgDanger
-        from pyrogram.raw.types.keyboard_button_style_bg_success import KeyboardButtonStyleBgSuccess
-
+        # Import dari __init__.py package, bukan file individual
+        import pyrogram.raw.types as raw_types
+        
         if self.bg_primary:
-            return KeyboardButtonStyleBgPrimary()
+            return raw_types.KeyboardButtonStyleBgPrimary()
         if self.bg_danger:
-            return KeyboardButtonStyleBgDanger()
+            return raw_types.KeyboardButtonStyleBgDanger()
         if self.bg_success:
-            return KeyboardButtonStyleBgSuccess()
+            return raw_types.KeyboardButtonStyleBgSuccess()
         return None
