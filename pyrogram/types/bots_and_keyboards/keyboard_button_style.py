@@ -1,24 +1,24 @@
+class _StyleBgPrimary:
+    pass
+
+class _StyleBgDanger:
+    pass
+
+class _StyleBgSuccess:
+    pass
+
 class KeyboardButtonStyle:
-    def __init__(
-        self,
-        bg_primary: bool = False,
-        bg_danger: bool = False,
-        bg_success: bool = False,
-        icon: int = None,
-    ):
+    def __init__(self, bg_primary=False, bg_danger=False, bg_success=False, icon=None):
         self.bg_primary = bg_primary
         self.bg_danger  = bg_danger
         self.bg_success = bg_success
         self.icon       = icon
 
     def write(self):
-        # Import dari __init__.py package, bukan file individual
-        import pyrogram.raw.types as raw_types
-        
         if self.bg_primary:
-            return raw_types.KeyboardButtonStyleBgPrimary()
+            return _StyleBgPrimary()
         if self.bg_danger:
-            return raw_types.KeyboardButtonStyleBgDanger()
+            return _StyleBgDanger()
         if self.bg_success:
-            return raw_types.KeyboardButtonStyleBgSuccess()
+            return _StyleBgSuccess()
         return None
