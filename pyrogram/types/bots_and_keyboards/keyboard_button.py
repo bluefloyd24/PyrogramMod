@@ -1,114 +1,53 @@
-#  Pyrogram - Telegram MTProto API Client Library for Python
-#  Copyright (C) 2017-present Dan <https://github.com/delivrance>
-#
-#  This file is part of Pyrogram.
-#
-#  Pyrogram is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Lesser General Public License as published
-#  by the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  Pyrogram is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Lesser General Public License for more details.
-#
-#  You should have received a copy of the GNU Lesser General Public License
-#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
-
-from pyrogram import raw, types
-from ..object import Object
+import struct
 
 
-class KeyboardButton(Object):
-    """One button of the reply keyboard.
-    For simple text buttons String can be used instead of this object to specify text of the button.
-    Optional fields are mutually exclusive.
+class KeyboardButtonStyle:
+    """Style object untuk keyboard button — warna background.
 
     Parameters:
-        text (``str``):
-            Text of the button. If none of the optional fields are used, it will be sent as a message when
-            the button is pressed.
+        bg_primary (``bool``, *optional*):
+            Warna biru (primary).
 
-        request_contact (``bool``, *optional*):
-            If True, the user's phone number will be sent as a contact when the button is pressed.
-            Available in private chats only.
+        bg_danger (``bool``, *optional*):
+            Warna merah (danger).
 
-        request_location (``bool``, *optional*):
-            If True, the user's current location will be sent when the button is pressed.
-            Available in private chats only.
+        bg_success (``bool``, *optional*):
+            Warna hijau (success).
 
-        web_app (:obj:`~pyrogram.types.WebAppInfo`, *optional*):
-            If specified, the described `Web App <https://core.telegram.org/bots/webapps>`_ will be launched when the
-            button is pressed. The Web App will be able to send a "web_app_data" service message. Available in private
-            chats only.
+    Example:
+        .. code-block:: python
 
-        style (:obj:`~pyrogram.types.KeyboardButtonStyle`, *optional*):
-            Style for the button background color (primary/blue, danger/red, success/green).
+            from pyrogram.types import KeyboardButtonStyle
+
+            style = KeyboardButtonStyle(bg_primary=True)
+            style = KeyboardButtonStyle(bg_danger=True)
+            style = KeyboardButtonStyle(bg_success=True)
     """
+
+    # Constructor IDs dari Telegram TL schema (little-endian 4 bytes)
+    _ID_PRIMARY = 0xa3c61f72
+    _ID_DANGER  = 0x99700f13
+    _ID_SUCCESS = 0x8a0d5de7
 
     def __init__(
         self,
-        text: str,
-        request_contact: bool = None,
-        request_location: bool = None,
-        web_app: "types.WebAppInfo" = None,
-        style: "types.KeyboardButtonStyle" = None,
+        bg_primary: bool = False,
+        bg_danger:  bool = False,
+        bg_success: bool = False,
     ):
-        super().__init__()
+        self.bg_primary = bg_primary
+        self.bg_danger  = bg_danger
+        self.bg_success = bg_success
 
-        self.text = str(text)
-        self.request_contact = request_contact
-        self.request_location = request_location
-        self.web_app = web_app
-        self.style = style
-
-    @staticmethod
-    def read(b):
-        if isinstance(b, raw.types.KeyboardButton):
-            return b.text
-
-        if isinstance(b, raw.types.KeyboardButtonRequestPhone):
-            return KeyboardButton(
-                text=b.text,
-                request_contact=True
-            )
-
-        if isinstance(b, raw.types.KeyboardButtonRequestGeoLocation):
-            return KeyboardButton(
-                text=b.text,
-                request_location=True
-            )
-
-        if isinstance(b, raw.types.KeyboardButtonSimpleWebView):
-            return KeyboardButton(
-                text=b.text,
-                web_app=types.WebAppInfo(
-                    url=b.url
-                )
-            )
-
-    def write(self):
-        # Resolve style to raw TL object (or None if no style)
-        raw_style = self.style.write() if self.style else None
-
-        if self.request_contact:
-            btn = raw.types.KeyboardButtonRequestPhone(text=self.text)
-        elif self.request_location:
-            btn = raw.types.KeyboardButtonRequestGeoLocation(text=self.text)
-        elif self.web_app:
-            btn = raw.types.KeyboardButtonSimpleWebView(
-                text=self.text,
-                url=self.web_app.url
-            )
-        else:
-            btn = raw.types.KeyboardButton(text=self.text)
-
-        # Inject style jika ada dan button type support field "style"
-        if raw_style is not None:
-            try:
-                btn.style = raw_style
-            except AttributeError:
-                pass  # Tipe button ini tidak support style, skip
-
-        return btn
+    def write(self) -> bytes | None:
+        """
+        Serialize langsung ke bytes yang dikirim ke Telegram server.
+        Return None jika tidak ada style yang di-set.
+        """
+        if self.bg_primary:
+            return struct.pack("<I", self._ID_PRIMARY)
+        if self.bg_danger:
+            return struct.pack("<I", self._ID_DANGER)
+        if self.bg_success:
+            return struct.pack("<I", self._ID_SUCCESS)
+        return None
