@@ -1,21 +1,25 @@
-from ..object import Object
+from io import BytesIO
+from typing import Any
+from pyrogram.raw.core.primitives import Int
+from pyrogram.raw.core import TLObject
 
 
-class KeyboardButtonStyleBgPrimary(Object):
-    """Blue/primary background style for keyboard buttons.
-    
-    Constructor: keyboardButtonStyleBgPrimary#a3c61f72
-    """
+class KeyboardButtonStyleBgPrimary(TLObject):  # type: ignore
+    """Blue/primary background style for keyboard buttons."""
+
+    __slots__ = []
 
     ID = 0xa3c61f72
     QUALNAME = "types.KeyboardButtonStyleBgPrimary"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self) -> None:
+        pass
 
     @staticmethod
-    def read(b: "BytesIO", *args) -> "KeyboardButtonStyleBgPrimary":
+    def read(b: BytesIO, *args: Any) -> "KeyboardButtonStyleBgPrimary":
         return KeyboardButtonStyleBgPrimary()
 
     def write(self, *args) -> bytes:
-        return self.ID.to_bytes(4, "little")
+        b = BytesIO()
+        b.write(Int(self.ID, False))
+        return b.getvalue()
