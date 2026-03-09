@@ -1,21 +1,25 @@
-from ..object import Object
+from io import BytesIO
+from typing import Any
+from pyrogram.raw.core.primitives import Int
+from pyrogram.raw.core import TLObject
 
 
-class KeyboardButtonStyleBgSuccess(Object):
-    """Green/success background style for keyboard buttons.
-    
-    Constructor: keyboardButtonStyleBgSuccess#8a0d5de7
-    """
+class KeyboardButtonStyleBgSuccess(TLObject):  # type: ignore
+    """Green/success background style for keyboard buttons."""
+
+    __slots__ = []
 
     ID = 0x8a0d5de7
     QUALNAME = "types.KeyboardButtonStyleBgSuccess"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self) -> None:
+        pass
 
     @staticmethod
-    def read(b: "BytesIO", *args) -> "KeyboardButtonStyleBgSuccess":
+    def read(b: BytesIO, *args: Any) -> "KeyboardButtonStyleBgSuccess":
         return KeyboardButtonStyleBgSuccess()
 
     def write(self, *args) -> bytes:
-        return self.ID.to_bytes(4, "little")
+        b = BytesIO()
+        b.write(Int(self.ID, False))
+        return b.getvalue()
